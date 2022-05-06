@@ -646,6 +646,7 @@ void dm19_2(void){
 //19.4 T&& atuo&& 未定型的右值引用推导:只有纯右值推导的T&& 和auto&& 类型为右值引用，其他均推导为左值引用；另外const T&& 为右值引用类型，非未定型
 template<typename T>
 void f(T&& p){cout<<"r-p"<<endl;}
+template<typename T>
 void f1(const T&& p){cout<<"const r-p"<<endl;}
 
 void dm19_3(void){
@@ -658,13 +659,28 @@ void dm19_3(void){
 	int x = 520,y = 1314;
 	auto&& v1 = x;//x非右值，-》左值引用
 	auto&& v2 = 520;//右值=》右值引用
-	decltype(x)&& v3  = y;//err=>int && v3 = y,左值不能初始化右值
-	const int && s = 100;
-	auto&& v4 = s;//s：常量右值引用（非右值）=-》v4：常量左值引用
+	//decltype(x)&& v3  = y;//err=>int && v3 = y,左值不能初始化右值
+	const int && s1 = 100;
+	auto&& v4 = s1;//s：常量右值引用（非右值）=-》v4：常量左值引用
 }
 //20 转移和完美转发
 //20.1 move 将左值转换为右值
 //20.2 forward<T>(t) 转发的t是左值或是右值，取决与T,只有T为左值引用时-->t为左值，其他情况-->t为右值
+template<typename T>
+void printValue(T& t){
+	cout<<"l-value:"<<t<<endl;
+}
+template<typename T>
+void printValue(T&& t){
+	cout<<"r-value:"<<t<<endl;
+}
+template<typename T>
+void testForward(T &&v){
+	printValue(v);//v 有名左值-》T& t-》l-value
+	printValue(move(v));//转为右值-》T&& T->r-value
+	printValue(std::forward<T>(v));//T:如果为左值引用，则完美转发左值v->T& t->l-value   //T:如果为右值引用，则完美转发右值v->T&& t->r-value
+	cout<<endl;
+}
 void dm20(){
 	//move
 	vector<string> s;
@@ -673,6 +689,13 @@ void dm20(){
 	auto && s2 = move(s);//不需要拷贝
 	auto & s3=  s;//需要拷贝，效率低
 	//forward<T>
+	testForward(520);//右值传入->v：模板参数：右值引用
+	int n = 1314;
+	testForward(n);//左值传入v->推导模板参数为左值一引用(注意：模板参数如果为T& 则T只能推导为类型，没有引用属性)
+	testForward(std::forward<int>(n));//n完美转发为右值，-》模板参数T:右值引用
+	testForward(std::forward<int&>(n));//n完美转发为左值-》模板参数T:左值引用
+	testForward(std::forward<int&&>(n));//n完美转发为右值，-》模板参数T:右值引用
+
 }
 
 int main()
@@ -710,6 +733,8 @@ int main()
 	dm19();
 	dm19_2();
 	dm19_3();
+	//右值引用 和 完美转发
+	dm20();
 }
 
 
