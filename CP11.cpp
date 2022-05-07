@@ -746,7 +746,7 @@ void dm21(void) {
 	int n = { 2 }; int n2{ 1 };
 	CL21 cl01 = { 12 };
 	CL21 cl02{ 1 };
-	CL21 cl03 = 20;//调用构造，不是私有拷贝构造{20}
+	//CL21 cl03 = 20;//调用构造，不是私有拷贝构造{20}
 	//new 内存分配初始化
 	int* a = new int{ 100 };
 	int* pary = new int[3]{ 1,3,5 };
@@ -765,6 +765,26 @@ void dm21(void) {
 	//initializer_list<T> 作为构造函数参数与
 	CL21_0({ "小明","huahua","dage","沈腾","jaling" });
 }
+//22 关键字using  和typedef, 相比较using 使用更方便
+typedef int(*fc)(int ,double);
+using fc2 = int(*)(int,double);
+//模板别名
+// template<typename T>
+// typedef map<int,T> type;//err
+template<typename T>
+using m_map = map<int,T>;
+void dm22(void){
+	//type a;//err
+	m_map<string> a;
+	a.insert({1,"hello"});
+	a.insert(pair<int,string>(2,"world"));
+	a.insert(make_pair<int,string>(3,"cpp"));
+
+	for(auto && cell : a){
+		cout<<cell.first<<" "<<cell.second<<endl;
+	}
+}
+
 int main()
 {
 	R_dm();
@@ -804,6 +824,8 @@ int main()
 	dm20();
 	//列表初始化
 	dm21();
+	//using
+	dm22();
 }
 
 
