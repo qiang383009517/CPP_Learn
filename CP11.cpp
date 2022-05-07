@@ -1,6 +1,5 @@
 ﻿// CP11.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
 //
-
 #include <iostream>
 #include<string>
 #include<assert.h>
@@ -479,23 +478,26 @@ public:
 		f7 = [this,&x,&y](){return num+(x++)+(y++);};
 		f8 =[this,&x](int y){return num+(++x)+y;};
 	}
+	int x = 1, y = 1;
 	int num = 1;
+	
 	std::function<int(int,int)> f6;
 	std::function<int()>f2,f3,f5,f7;
 	std::function<int(int)> f8;
 };
 void dm_16(void){
+	int x = 1, y = 2;
 	lam_test lamd(1,2);
 	int f2 = lamd.f2();
 	int f3 = lamd.f3();
 	int f5 = lamd.f5();
-	int f6 = lamd.f6(11,12);
-	int f7 = lamd.f7();
-	int f8 = lamd.f8(11);
+	int f6 = lamd.f6(11, 12);
+	//int f7 = lamd.f7();
+	//int f8 = lamd.f8(11);
 	cout<<"f2:"<<f2<<" f3:"<<f3<<" f5:"<<f5<<
-	" f6:"<<f6<<" f7:"<<f7<<" f8:"<<f8<<endl;
-	cout<<"f2:"<<lamd.f2()<<" f3:"<<lamd.f3()<<" f5:"<<lamd.f5()<<
-	" f6:"<<lamd.f6(10,12)<<" f7:"<<lamd.f7()<<" f8:"<<lamd.f8(11)<<endl;
+	" f6:"<<f6/*<<" f7:"<<f7 << " f8:" << f8 << endl*/;
+	/*	cout<<"f2:"<<lamd.f2()<<" f3:"<<lamd.f3()<<" f5:"<<lamd.f5()<<
+	" f6:"<<lamd.f6(10,12)<<" f7:"<<lamd.f7()<<" f8:"<<lamd.f8(11)<<endl;*/
 }
 //17 常量表达式constexpr 修饰常量 在编译阶段即被确定
 // const 可以修饰只读变量 和 常量 
@@ -698,6 +700,71 @@ void dm20(){
 
 }
 
+//21 列表初始化 聚合体 非聚合体 initial_list<>
+class CL21 {
+public:
+	CL21(int n) { cout << "CL21(int n)..." << endl; }
+private:
+	CL21(CL21& cl) { cout << "CL21(CL21& cl)..." << endl; }
+};
+CL21 retCL21(int n) {
+	//CL21 ret{ n };
+	//return ret;//err，因为拷贝构造为私有函数
+	return { n };
+}
+
+class CL21_0 {
+public:
+	CL21_0(int n):m_num(n){}
+	CL21_0(initializer_list<string> names) {
+		for (auto it = names.begin(); it != names.end(); it++) {
+			cout << *it << " ";
+		}
+		cout << endl;
+	}
+private:
+	int m_num;
+	vector<string> names;
+protected:
+	int m_m;
+public:
+	virtual int getm() {
+		return m_m;
+	}
+};
+
+void travel(std::initializer_list<int> a) {
+	for (auto it = a.begin(); it != a.end(); it++) {
+		cout << *it << " ";
+	}
+	cout << endl;
+}
+void dm21(void) {
+	//类和变量的列表初始化
+	int arry[3]{ 1,3,4 };
+	int ar2[3] = { 3,5,6 };
+	int n = { 2 }; int n2{ 1 };
+	CL21 cl01 = { 12 };
+	CL21 cl02{ 1 };
+	CL21 cl03 = 20;//调用构造，不是私有拷贝构造{20}
+	//new 内存分配初始化
+	int* a = new int{ 100 };
+	int* pary = new int[3]{ 1,3,5 };
+
+	//函数返回值-列表初始化
+	retCL21(10);
+
+	//聚合体：普通数组；自定义类型：无自定义的构造函数/无私有成员或保护的非静态成员/静态成员不能用列表初始化/无基类/无虚函数/
+	CL21_0 c1{ 20 };
+	//非聚合体：不满足聚合体条件的都是非聚合体，注意：当一个类内部含有非聚合体类型时，它也可能是一个聚合体
+	//initiallizer_list<T> 作为函数参数
+	travel({ 1,3,5,7,9 });
+	initializer_list<int> b{ 2,4,5,6,7 };
+	travel(b);
+
+	//initializer_list<T> 作为构造函数参数与
+	CL21_0({ "小明","huahua","dage","沈腾","jaling" });
+}
 int main()
 {
 	R_dm();
@@ -735,6 +802,8 @@ int main()
 	dm19_3();
 	//右值引用 和 完美转发
 	dm20();
+	//列表初始化
+	dm21();
 }
 
 
