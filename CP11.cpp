@@ -784,7 +784,90 @@ void dm22(void){
 		cout<<cell.first<<" "<<cell.second<<endl;
 	}
 }
-
+// 23 仿函数 可调用对象包装器std::function 绑定器std::bind
+//23.1 可调用对象
+//函数指针
+int (*func)(int,double) = [](int x,double y)->int{};
+using fc1 = void(*)(int,string);
+struct dm23_1{
+	//成员函数指针或类成员指针
+	static void prints(int a,string b){
+		cout<<a<<" "<<b<<endl;
+	}
+	int m_num;
+	//operator()成员的类对象,重载()
+	void operator()(string s){
+		cout<<s<<endl;
+	}
+	//可被转换为函数指针的类对象
+	operator fc1(){
+		return this->prints;//prints是类的静态成员函数
+	}	
+};
+struct dm23_2{
+	void print(int a,string b){
+		cout<<a<<" "<<b<<endl;
+	}
+};
+void dm23_1(void){
+	//operator()仿函数
+	struct dm23_1 dm23;
+	dm23("cpp11_hello");
+	//转换为函数指针的类对象
+	dm23(1,"hello_cpp11");
+	//定义成员函数指针指向类成员函数，并调用
+	dm23_2 dm;
+	void (dm23_2::*fptr)(int,string) = &dm23_2::print;
+	(dm.*fptr)(10,"hahaha");
+	//定义类成员指针指向类成员，并调用
+	int dm23_1::*nptr = &dm23_1::m_num;
+	dm23.*nptr = 11;
+	cout<<"nptr:"<<dm23.m_num<<endl;
+}
+//23.2 可调用对象包装器
+void dm23_funtion(){
+	//std::function接收函数指针
+	std::function<void(int,double)> f1 = func;
+	f1(1,3.5);
+	//接收静态成员函数
+	std::function<void(int,string)> f2 = dm23_1::prints;
+	f2(3,"haihaiah");
+	//接收仿函数
+	struct dm23_1 dm231;
+	std::function<void(string)> f3 = dm231;//dm231相当于一个仿函数的指针
+	dm231("jjjjjjj");
+	//接收类转换为函数指针
+	std::function<void(int,string)> f4 = dm231;//dm231相当于一个函数指针
+	f4(12,"121212");
+}
+//23.3 绑定器
+void output(int x,int y){
+	cout<<x<<" "<<y<<endl;
+}
+class dm23_3{
+	public:
+	void output(int x,int y){
+		cout<<x<<" "<<y<<endl;
+	}
+	int m_n;
+};
+void dm23_bind(){
+	//绑定可调用对象和其参数
+	bind(output,placeholders::_1,2)(3);
+	auto f0 = bind(output,placeholders::_1,2);
+	f0(12);
+	std::function<void(int)> f1 = std::bind(output,placeholders::_1,2);//placeholders::_1绑定第1个参数 作为第一个参数传入output，2作为第二个参数传入output
+	f1(10);///placeholders::_1绑定10
+	std::function<void(int,int)>f2 = std::bind(output,placeholders::_2,345);//placeholders::_2绑定第二个参数传入output的第一个参数
+	f2(0,123);//placeholders::_2 绑定123；0不使用
+	//类对象成员的绑定
+	dm23_3 dm3;
+	std::function<void(int,int)> f3 = std::bind(&dm23_3::output,&dm3,placeholders::_2,placeholders::_1);
+	f3(321,123);//placeholders::_2 绑定123 传入dm3.output函数的第一个参数;placeholders::_1 绑定321传入dm3.output的第二个参数
+	std::function<int&(void)> f4 = std::bind(&dm23_3::m_n,&dm3);//bind 绑定对象成员变量
+	f4()  = 100;
+	cout<<"dm3.m_n:"<<dm3.m_n<<endl;
+}
 int main()
 {
 	R_dm();
@@ -826,6 +909,10 @@ int main()
 	dm21();
 	//using
 	dm22();
+	//仿函数 可调用对象包装器 可调用对象绑定器
+	dm23_1();
+	dm23_funtion();
+	dm23_bind();
 }
 
 
