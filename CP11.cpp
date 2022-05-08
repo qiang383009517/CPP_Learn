@@ -7,6 +7,7 @@
 #include<map>
 #include<list>
 #include<functional>
+#include<type_traits>
 
 using namespace std;
 
@@ -868,6 +869,55 @@ void dm23_bind(){
 	f4()  = 100;
 	cout<<"dm3.m_n:"<<dm3.m_n<<endl;
 }
+
+//24 POD类型 plian old data 普通的数据类型==》1 可以安全的进行memset和memcpy;2 安全的在C和C++间进行操作;3 保证静态初始化时安全有效
+//24.1 平凡的类或结构体:1.拥有默认的构造函数 和析构函数(什么都不干)或用=defalt来显示的平凡化
+					//2.拥有平凡的拷贝构造函数和移动构造函数
+					//3.拥有平凡的拷贝复制运算符和移动赋值运算符
+					//4.不含虚函数或基类
+//24.2 标准的布局类型的类或结构体:1.所有非静态成员有相同的访问权限(都是private protected public)
+							//2.基类中有静态成员，派生类中有非静态成员 -- 或者-- 基类中有非静态成员，派生类中无非静态成员
+							//3.子类中的第一个非静态成员与基类类型不同 //4.没有虚函数或虚基类
+// 对平凡的判断std::is_trival 模板类  对标准布局的判断std::is_standard_layout 模板类
+class dm24_a{};
+class dm24_b{dm24_b(){}};//false 不能有自定义的构造函数
+class dm24_c:dm24_b{};//false 不能有基类
+class dm24_d{virtual void fn();};//false 不含虚函数
+class dm24_e:virtual public dm24_a{};//不含基类
+
+struct dm24_A{};
+struct dm24_B:dm24_A{int i;};
+struct dm24_C{public:int a;private:int b;};//flase 访问权限不一致
+struct dm24_D1{static int i;};
+struct dm24_D2{int i;};
+struct dm24_E1{static int i;};
+struct dm24_E2{int i;};
+struct dm24_D:public dm24_D1,public dm24_E1{int a;};
+struct dm24_E:public dm24_D1,public dm24_E2{int a;};//false 基类和子类同时出现非静态成员变量 
+struct dm24_F:public dm24_D2,public dm24_E2{static int a;};//false 多继承的基类中同时出现了非静态成员
+struct dm24_G:public dm24_A{int foo;dm24_A a;};//根据编译器不同可能结果不同
+struct dm24_H:public dm24_A{dm24_A a;int foo;};//false 子类第一个非静态成员类型和基类类型不能相同
+
+void dm24(){
+	//std::is_trival
+	cout<<"a:"<<is_trivial<dm24_a>::value<<endl;
+	cout<<"b:"<<is_trivial<dm24_b>::value<<endl;
+	cout<<"c:"<<is_trivial<dm24_c>::value<<endl;
+	cout<<"d:"<<is_trivial<dm24_d>::value<<endl;
+	cout<<"e:"<<is_trivial<dm24_e>::value<<endl;
+	//std::is_standard_layout
+	cout<<"A:"<<is_standard_layout<dm24_A>::value<<endl;
+	cout<<"B"<<is_standard_layout<dm24_B>::value<<endl;
+	cout<<"C"<<is_standard_layout<dm24_C>::value<<endl;
+    cout << "D: " << is_standard_layout<dm24_D>::value << endl;
+	cout << "H: " << is_standard_layout<dm24_D1>::value << endl;
+	cout << "H: " << is_standard_layout<dm24_D2>::value << endl;
+    cout << "D1: " << is_standard_layout<dm24_E>::value << endl;
+    cout << "E: " << is_standard_layout<dm24_F>::value << endl;
+    cout << "F: " << is_standard_layout<dm24_G>::value << endl;
+    cout << "G: " << is_standard_layout<dm24_H>::value << endl;
+}
+
 int main()
 {
 	R_dm();
@@ -913,6 +963,8 @@ int main()
 	dm23_1();
 	dm23_funtion();
 	dm23_bind();
+	//POD数据类型
+	dm24();
 }
 
 
