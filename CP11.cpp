@@ -918,6 +918,102 @@ void dm24(){
     cout << "G: " << is_standard_layout<dm24_H>::value << endl;
 }
 
+//25 关键字 =default(让类或结构体保持POD类型) =delete
+class dm25{
+	public:
+	dm25()=default;//默认无参构造
+	dm25(const dm25& obj)=default;//指定默认拷贝构造
+	dm25(dm25&& obj)=default;//指定移动构造为默认函数
+	dm25& operator=(const dm25& obj)=default;//指定复制赋值操作符为默认函数
+	dm25& operator=(dm25&& obj)=default;//指定移动赋值操作符为默认函数
+	~dm25()=default;//指定析构函数为默认函数
+	//25.2 delete
+	dm25(int a)=delete;//不再被使用
+	int m;
+};
+//或者default放在外边，同一类型的构造函数只能有一个时默认的
+// dm25::dm25()=default;
+// dm25::dm25()=default;//默认无参构造
+// dm25::dm25(const dm25& obj)=default;//指定默认拷贝构造
+// dm25::dm25(dm25&& obj)=default;//指定移动构造为默认函数
+// dm25&  dm25::operator=(const dm25& obj)=default;//指定复制赋值操作符为默认函数
+// dm25& dm25::operator=(dm25&& obj)=default;//指定移动赋值操作符为默认函数
+void dm25_1(){
+	dm25 m25;
+	//dm25 mm(10);
+}
+
+//26 关键字friend的拓展
+//26.1类友元
+class dm26_tom;
+using tom = dm26_tom;
+class dm26_jack{
+	//friend class tom;//cpp98
+	friend tom;//cpp11
+	string name = "jack";//默认私有
+	void print(){
+		cout<<"name="<<name<<endl;
+	}
+};
+class dm26_tom{
+	public:
+	void print(){
+		//访问友元类的私有成员
+		cout<<"my friend name is "<<jack.name<<endl;
+		cout<<"my friend's jack print:"<<endl;
+		jack.print();
+	}
+	private:
+	string name="tom";
+	dm26_jack jack;
+};
+void dm26_1(){
+	tom tm;
+	tm.print();
+}
+
+//26.2 模板友元类
+template<typename T>
+class Rct{
+	friend T;
+	public:
+	Rct(int w,int h):width(w),height(h){}
+	private:
+	int width;
+	int height;
+};
+template<typename T>
+class Circle{
+	friend T;
+	public:
+	Circle(int r):radius(r){}
+	private:
+	int radius;
+};
+class Verify{
+	public:
+	void verify_rct(int w,int h,Rct<Verify>& rct){//声明一个Verify友元类的Rct对象
+		if(rct.width>w&&rct.height>h){
+			cout<<"矩形满足条件"<<endl;
+		}else{
+			cout<<"不满足矩形条件"<<endl;
+		}
+	}
+	void verify_circle(int r,Circle<Verify>& circle){//声明一个Verify友元类的Circle对象
+		if(circle.radius>r){
+			cout<<"满足条件的圆形"<<endl;
+		}else{
+			cout<<"不满足圆形条件"<<endl;
+		}
+	}
+};
+void dm26_2(){
+	Verify vf;
+	Rct<Verify> rct(10,20);//创建一个Verify友元类的Rct对象
+	Circle<Verify> cl(10);//创建一个Verify友元类的Circle对象
+	vf.verify_rct(3,5,rct);
+	vf.verify_circle(12,cl);
+}
 int main()
 {
 	R_dm();
@@ -965,6 +1061,9 @@ int main()
 	dm23_bind();
 	//POD数据类型
 	dm24();
+	//friend
+	dm26_1();
+	dm26_2();
 }
 
 
