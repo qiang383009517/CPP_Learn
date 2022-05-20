@@ -1,5 +1,5 @@
 ﻿// CP11.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
-//
+
 #include <iostream>
 #include<string>
 #include<assert.h>
@@ -788,7 +788,7 @@ void dm22(void){
 // 23 仿函数 可调用对象包装器std::function 绑定器std::bind
 //23.1 可调用对象
 //函数指针
-int (*func)(int,double) = [](int x,double y)->int{};
+int (*func)(int, double) = [](int x, double y)->int {return 0; };
 using fc1 = void(*)(int,string);
 struct dm23_1{
 	//成员函数指针或类成员指针
@@ -835,6 +835,7 @@ void dm23_funtion(){
 	f2(3,"haihaiah");
 	//接收仿函数
 	struct dm23_1 dm231;
+	dm231.m_num = 0;
 	std::function<void(string)> f3 = dm231;//dm231相当于一个仿函数的指针
 	dm231("jjjjjjj");
 	//接收类转换为函数指针
@@ -1014,6 +1015,101 @@ void dm26_2(){
 	vf.verify_rct(3,5,rct);
 	vf.verify_circle(12,cl);
 }
+//28 非受限联合体 任何非引用类型都可以作为非受限联合体的成员
+//28_1 静态成员
+union Test28{
+	int age;
+	int id;
+	//int& tmp = age;//err 不可有引用成员
+	static char c;
+	static int print() {//静态成员函数只能访问静态成员
+		cout << "value" << c << endl;
+		return 0;
+	}
+};
+//28_2 POD成员
+
+char Test28::c = 'c';
+void dm28_1() {
+	Test28 t;
+	Test28 t1;
+	t.c = 'b';
+	t1.c = 'c';
+	t1.age = 10;
+	cout << "t1.c" << t1.c << endl;
+	cout << "t.c" << t.c << endl;
+	cout << "t1.age" << t1.age << endl;
+	cout << "t1.id" << t1.id << endl;
+	t.print();
+	t1.print();
+
+}
+//28_2 非POD类型成员（非受限联合体会删除默认构造系列函数，需自定义构造系列函数） POD类型用在非受限联合体时要placement_new即：calssname *ptr = new(内存地址)classname
+/*
+union Student {
+	int id;
+	string name;//POD类型，需要放置new
+};
+*/
+class Base28 {
+public:
+	void setText(string str) {
+		notes = str;
+	}
+	void print() {
+		cout << "Base notes:" << notes << endl;
+	}
+private:
+	string notes;
+};
+
+union Student {
+	Student() {
+		new(&name)string;
+	}
+	~Student(){}
+	int id;
+	Base28 tmp;
+	string name;
+};
+//28_3 匿名非受限联合体
+class Person28 {
+public:
+	Person28(int i) :id(i) {}
+	Person28(string nm):name(nm){}
+	~Person28(){}
+	void setid(int n) {
+		id = n;
+		cout << &id << endl;
+	}
+	void print() {
+		cout << "id:" << id << endl;
+		cout << &id << endl;
+		cout << "name:" << name << endl;
+		cout << &name << endl;
+	}
+private:
+	union {
+		int id;
+		string name;
+	};
+};
+void dm28_2() {
+	Student s;
+	//s.id = 1000;
+	s.name = "alpha";
+	s.tmp.setText("我要成为最帅的男银");
+	s.tmp.print();
+	s.id = 100;
+	cout << "Student name:" << s.name << endl;
+	cout << &s.name << endl;
+	cout << "Student id:" << s.id << endl;
+	cout << &s.id << endl;
+	string name = "beta";
+	Person28 p(name);
+	p.setid(100000);
+	p.print();
+}
 int main()
 {
 	R_dm();
@@ -1064,6 +1160,9 @@ int main()
 	//friend
 	dm26_1();
 	dm26_2();
+	//非受限联合体
+	dm28_1();
+	dm28_2();
 }
 
 
