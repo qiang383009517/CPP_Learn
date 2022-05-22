@@ -8,6 +8,8 @@
 #include<list>
 #include<functional>
 #include<type_traits>
+#include<memory>
+#include<string.h>
 
 using namespace std;
 
@@ -1032,6 +1034,121 @@ void dm27(){
 	Goods ym = yumi;//ok
 	Goods xm = Goods::xiaomai;//ok
 }
+//29 智能指针
+//29_1 共享智能指针 std::shared_ptr
+//std::shared_ptr 1 构造初始化 拷贝和移动构造 2 std::make_shared初始化函数 
+class Test29{
+	public:
+	Test29(){cout<<"construct test29"<<endl;}
+	Test29(int i){cout<<"construct test29 ,x="<<i<<endl;}
+	Test29(string s){cout<<"construct test29,str="<<s<<endl;}
+	~Test29(){cout<<"destruct test29"<<endl;}
+};
+
+//智能指针删除器,std::default_delete<T>()
+template<typename T>
+shared_ptr<T> make_shared_arry(size_t size){
+	return shared_ptr<T>(new T[size],std::default_delete<T[]>());
+}
+
+void dm29_1(){
+	//1 初始化 shared_ptr<typename T>
+	shared_ptr<int> ptr1(new int(100));
+	cout<<"ptr1计数:"<<ptr1.use_count()<<endl;
+	shared_ptr<char>ptr2(new char[12]);
+	cout<<"ptr2计数:"<<ptr2.use_count()<<endl;
+	//创建智能指针，不指向任何内存
+	shared_ptr<int> ptr3;
+	cout<<"ptr3计数:"<<ptr3.use_count()<<endl;//计数为0
+	//创建智能指针，初始化为空
+	shared_ptr<int>ptr4(nullptr);
+	cout<<"ptr4计数:"<<ptr4.use_count()<<endl;// 指针计数为0
+
+	//2 原始指针不能多次初始化不同智能指针
+	int *p = new int(10);
+	shared_ptr<int> p1(p);
+	shared_ptr<int> p2(p);//p 不能再次初始化智能指针，编译不保存，运行会报错
+
+	//3 拷贝构造初始化 移动构造初始化
+	shared_ptr<int> ptr01(new int(12));
+	cout<<"ptr01.use_count()="<<ptr01.use_count()<<endl;
+	shared_ptr<int> ptr02(ptr01);//拷贝构造初始化 计数+1
+	cout<<"ptr02.use_count="<<ptr02.use_count()<<endl;
+	shared_ptr<int> ptr03(move(ptr02));//移动构造初始化，计数不变
+	cout<<"ptr03.use_count="<<ptr03.use_count()<<endl;
+	shared_ptr<int> ptr04 = ptr03;//拷贝构造初始化，计数+1
+	cout<<"ptr04.use_count="<<ptr04.use_count()<<endl;
+	shared_ptr<int> ptr05 = std::move(ptr04);//移动构造初始化，计数不变
+	cout<<"ptr05.sue_count="<<ptr05.use_count()<<endl;
+
+	//4 shared_ptr<T> make_shared(Args&&... args)函数初始化 
+	shared_ptr<int> p01 = make_shared<int>(18);
+	cout<<"p01.count="<<p01.use_count()<<endl;
+	shared_ptr<int> p02 = p01;
+	cout<<"p02.count="<<p02.use_count()<<endl;
+
+	shared_ptr<Test29> pt1 = make_shared<Test29>();
+	cout<<"pt1.count="<<pt1.use_count()<<endl; //默认构造 计数+1
+	shared_ptr<Test29> pt2 = make_shared<Test29>(123);//123 传入Test构造参数
+	cout<<"pt2.count="<<pt2.use_count()<<endl;
+	shared_ptr<Test29> pt3 = make_shared<Test29>("hello test");//参数直接传给Test构造
+	cout<<"pt3.count="<<pt3.use_count()<<endl;
+	auto pt4 = pt3;
+	auto pt5 = pt3;
+	cout<<"pt5.count="<<pt4.use_count()<<endl;
+	cout<<"----------reset----------------"<<endl;
+	//5 std::shared_ptr::reset方法
+	pt3.reset();//pt3释放，计数-1
+	cout<<"pt4.count="<<pt4.use_count()<<endl;
+
+	pt5.reset(new Test29(132));//reset 重置pt2
+	cout<<"pt5.count="<<pt5.use_count()<<endl;
+	cout<<"pt4.count="<<pt4.use_count()<<endl;
+
+	//6 获取原始指针 T* get()
+	shared_ptr<int> pg1(new int(211));
+	*pg1 = 121;
+	cout<<"pg1->"<<*pg1.get()<<" "<<"*pg1="<<*pg1<<endl;
+
+	shared_ptr<char>pc(new char[32]);
+	char* add = pc.get();
+	memset(add,0,32);
+	strcpy(add,"hello pc.get()");
+	cout<<"pc:"<<pc<<" "<<"add:"<<add<<endl;
+
+	//7 指定删除器，shared_ptr默认删除器不支持数组对象，需要自己指定或使用std::default_delete<T>()
+	//7.1 匿名函数的删除器
+	shared_ptr<int> pi(new int(103),[](int *p){cout<<"delete p"<<endl;delete p;});
+	shared_ptr<int> pary(new int[10],[](int* p){cout<<"delete p[]"<<endl;delete []p;});
+	//7.2 std::default_delete<T>()
+	shared_ptr<int> pary2 = make_shared_arry<int>(10);
+}
+//29_2 独占智能指针 std::unique_ptr<T> 
+unique_ptr<int> dm29func(){
+	return unique_ptr<int>(new int(12));
+}
+void dm29_2(){
+	//1 初始化
+	unique_ptr<int> p1(new int(111));
+	//unique_ptr<int> p2 = p1;//err 独占智能指针不允许赋值
+	unique_ptr<int> p3 = move(p1);
+	unique_ptr<int> p4 = dm29func();//匿名对象初始化P4
+	//2 reset方法
+	p3.reset();
+	p4.reset(new int(520));
+
+	//3 获取原始指针shared_ptr::get方法
+	int *p = p4.get();
+	cout<<"*p:"<<*p<<" "<<"*p4.get():"<<*p4.get()<<endl;
+
+	//4 删除器，独占指针的删除器需要指定删除器的类型
+	using dfunc = void(*)(int*);
+	unique_ptr<int,dfunc> p5(new int(123),[](int* p){cout<<"delete dfunc p"<<endl;delete p;});
+	unique_ptr<int,std::function<void(int*)>> p6(new int(321),[&](int* p){cout<<"delete function p"<<endl;delete p;});//lamamda式中如果捕获外部变量，则不能转换为普通函数，需要std::funtion包装为可调用对象
+}
+
+//29_3 弱指针 std::weak_ptr
+  
 
 int main()
 {
@@ -1085,6 +1202,9 @@ int main()
 	dm26_2();
 	//强枚举
 	dm27();
+	// 智能指针
+	dm29_1();
+	dm29_2();
 }
 
 
